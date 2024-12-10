@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -29,7 +30,7 @@ class _MapScreenState extends State<MapScreen> {
     if (!hasPermission) return;
 
     Position position = await Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+      locationSettings: LocationSettings(accuracy: LocationAccuracy.high),
     );
 
     setState(() {
@@ -56,12 +57,14 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _startLocationUpdates() {
-    Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 10,
-      ),
-    ).listen((Position position) {
+    Timer.periodic(Duration(seconds: 10), (timer) async {
+      final hasPermission = await _handlePermission();
+      if (!hasPermission) return;
+
+      Position position = await Geolocator.getCurrentPosition(
+        locationSettings: LocationSettings(accuracy: LocationAccuracy.high),
+      );
+
       LatLng newLocation = LatLng(position.latitude, position.longitude);
       setState(() {
         _currentLocation = newLocation;
@@ -71,7 +74,6 @@ class _MapScreenState extends State<MapScreen> {
     });
   }
 
-  // Add or update the marker at the given position
   void _addMarker(LatLng position) {
     _currentMarker = Marker(
       markerId: const MarkerId("current_location"),
@@ -87,7 +89,6 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  // Update marker position and polyline
   void _updateMarkerAndPolyline(LatLng position) {
     _addMarker(position);
 
@@ -106,31 +107,26 @@ class _MapScreenState extends State<MapScreen> {
         title: const Text("Google Maps & Geolocator"),
       ),
       body: _currentLocation == null
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
+          ? const Center(child: CircularProgressIndicator())
           : GoogleMap(
-              initialCameraPosition: CameraPosition(
-                target: _currentLocation!,
-                zoom: 16,
-              ),
-              markers: _currentMarker != null ? {_currentMarker!} : {},
-              polylines: _currentPolyline != null ? {_currentPolyline!} : {},
-              onMapCreated: (controller) {
-                _mapController = controller;
-                _isMapInitialized = true;
-                if (_currentLocation != null) {
-                  _mapController.animateCamera(
-                    CameraUpdate.newLatLng(_currentLocation!),
-                  );
-                }
-              },
-              myLocationEnabled: true,
-              myLocationButtonEnabled: true,
-              onTap: (LatLng? latLng) {
-                print(latLng);
-              },
-            ),
+        initialCameraPosition: CameraPosition(
+          target: _currentLocation!,
+          zoom: 16,
+        ),
+        markers: _currentMarker != null ? {_currentMarker!} : {},
+        polylines: _currentPolyline != null ? {_currentPolyline!} : {},
+        onMapCreated: (controller) {
+          _mapController = controller;
+          _isMapInitialized = true;
+          if (_currentLocation != null) {
+            _mapController.animateCamera(
+              CameraUpdate.newLatLng(_currentLocation!),
+            );
+          }
+        },
+        myLocationEnabled: true,
+        myLocationButtonEnabled: true,
+      ),
     );
   }
 }
