@@ -9,6 +9,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  late GoogleMapController googleMapController;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -17,8 +18,17 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: GoogleMap(
         initialCameraPosition: CameraPosition(
-          target: LatLng(22.149888, 75.644989),
+          zoom: 16,
+          target: LatLng(22.666241564934523, 88.89632295817137),
         ),
+        onTap: (LatLng? latLng){
+          print(latLng);
+        },
+        zoomControlsEnabled: true,
+        zoomGesturesEnabled: true,
+        onMapCreated: (GoogleMapController controller){
+          googleMapController = controller;
+        },
       ),
     );
   }
